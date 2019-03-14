@@ -67,6 +67,8 @@ public final class VirtualCore {
 
     public static final int GET_HIDDEN_APP = 0x00000001;
 
+    public static final String TAICHI_PACKAGE = "me.weishu.exp";
+
     @SuppressLint("StaticFieldLeak")
     private static VirtualCore gCore = new VirtualCore();
     private final int myUid = Process.myUid();
@@ -388,11 +390,25 @@ public final class VirtualCore {
     }
 
     public boolean isOutsidePackageVisible(String pkg) {
+        if (!isXposedEnabled()) {
+            PackageManager unHookPackageManager = getUnHookPackageManager();
+            try {
+                unHookPackageManager.getPackageInfo(pkg, 0);
+                return true;
+            } catch (PackageManager.NameNotFoundException e) {
+                return false;
+            }
+        }
+
         try {
             return getService().isOutsidePackageVisible(pkg);
         } catch (RemoteException e) {
             return VirtualRuntime.crash(e);
         }
+    }
+
+    public boolean isXposedEnabled() {
+        return !VirtualCore.get().getContext().getFileStreamPath(".disable_xposed").exists();
     }
 
     public boolean isAppInstalled(String pkg) {
